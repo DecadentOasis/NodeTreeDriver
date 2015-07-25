@@ -1,0 +1,29 @@
+{
+  "name": "node-tree-driver",
+  "version": "1.0.0",
+  "description": "Node.js tree drivers for Decadent Oasis",
+  "main": "index.js",
+  "dependencies": {
+    "buffertools": "^2.1.3",
+    "heroic-pixel-pusher": "git+https://github.com/ajones/node-pixelpusher.git",
+    "tinycolor2": "^1.1.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DecadentOasis/NodeTreeDriver.git"
+  },
+  "keywords": [
+    "pixelpusher",
+    "node"
+  ],
+  "author": "Matthew Stone",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/DecadentOasis/NodeTreeDriver/issues"
+  },
+  "homepage": "https://github.com/DecadentOasis/NodeTreeDriver#readme"
+}
