@@ -1,5 +1,7 @@
 var PixelPusher = require('heroic-pixel-pusher');
 var PixelStrip = PixelPusher.PixelStrip;
+var NanoTimer = require('nanotimer');
+var tinycolor = require("tinycolor2");
 
 new PixelPusher().on('discover', function(controller) {
     var timer = null;
@@ -24,7 +26,7 @@ new PixelPusher().on('discover', function(controller) {
             'TIMEOUT : PixelPusher at address [' + controller.params.ipAddress + 
             '] with MAC (' + controller.params.macAddress + 
             ') has timed out. Awaiting re-discovery....');
-        if (!!timer) clearInterval(timer);
+        if (!!timer) timer.clearInterval();
     });
 
     // aquire the number of strips that the controller has said it
@@ -40,21 +42,28 @@ new PixelPusher().on('discover', function(controller) {
     // create a loop that will send commands to the PP to update the strip
     var UPDATE_FREQUENCY_MILLIS = 15;// 15 is just faster than 60 FPS
 
-    var HUE_INCR_PER_MS = 0.01;
+    var HUE_INCR_PER_MS = 0.005;
 
     var index = 0;
 
     var that = this;
 
 
-    timer = setInterval(function() {
+    var strips = [];
+    for (var stripNum = 0; stripNum < PIXELS_PER_STRIP; stripNum++) {
+        strips.push(new PixelStrip(stripNum,PIXELS_PER_STRIP));
+    }
+
+    timer = new NanoTimer();
+    var intvl = '' + UPDATE_FREQUENCY_MILLIS + 'm';
+    console.log(intvl);
+    timer.setInterval(function() {
         // create an array to hold the data for all the strips at once
         // loop
 
-        var tinycolor = require("tinycolor2");
-        var strips = [];
+        var rendered = [];
         for (var stripId = 0; stripId< NUM_STRIPS; stripId ++){
-            var s = new PixelStrip(stripId,PIXELS_PER_STRIP);
+            var s = strips[stripId];
 
             for (var i = 0; i < PIXELS_PER_STRIP; i++) {
                 var rgb = tinycolor.fromRatio(
@@ -66,20 +75,19 @@ new PixelPusher().on('discover', function(controller) {
                 s.getPixel(i).setColor(rgb.r, rgb.g, rgb.b, 255);
             }
             // render the strip data into the correct format for sending
-            // to the pixel pusher controller
-            var renderedStripData = s.getStripData();
+            // to the pixel pusher controller            
             // add this data to our list of strip data to send
-            strips.push(renderedStripData);
+            rendered.push(s.getStripData());
         }
         // inform the controller of the new strip frame
-        controller.refresh(strips);
+        controller.refresh(rendered);
         index += HUE_INCR_PER_MS * UPDATE_FREQUENCY_MILLIS;
-        if (index > PIXELS_PER_STRIP) {
+        if (index > PIXELS_PER_STRIP) {            
             index = 0;
-        }
-        
+        }        
+    }, '', intvl);
 
-    }, UPDATE_FREQUENCY_MILLIS);
+    
 
 }).on('error', function(err) {
   console.log('PixelPusher Error: ' + err.message);
