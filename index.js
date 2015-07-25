@@ -12,14 +12,14 @@ new PixelPusher().on('discover', function(controller) {
     console.log('-----------------------------------');
 
     // capture the update message sent back from the pp controller
-    controller.on('update', function() {
+    controller.on('update', function update() {
         console.log ({
             updatePeriod  : Math.round(
                 this.params.pixelpusher.updatePeriod * 100) / 100,
             deltaSequence : this.params.pixelpusher.deltaSequence,
             powerTotal    : this.params.pixelpusher.powerTotal
         });
-    }).on('timeout', function() {
+    }).on('timeout', function timeout() {
         // be sure to handel the situation when the controller dissappears.
         // this could be due to power cycle or network conditions
         console.log(
@@ -57,7 +57,9 @@ new PixelPusher().on('discover', function(controller) {
     timer = new NanoTimer();
     var intvl = '' + UPDATE_FREQUENCY_MILLIS + 'm';
     console.log(intvl);
-    timer.setInterval(function() {
+    timer.setInterval(tick, '', intvl);
+
+    function tick() {
         // create an array to hold the data for all the strips at once
         // loop
 
@@ -85,8 +87,7 @@ new PixelPusher().on('discover', function(controller) {
         if (index > PIXELS_PER_STRIP) {            
             index = 0;
         }        
-    }, '', intvl);
-
+    };
     
 
 }).on('error', function(err) {
