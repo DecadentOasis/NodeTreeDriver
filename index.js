@@ -12,14 +12,18 @@ new PixelPusher().on('discover', function(controller) {
     // capture the update message sent back from the pp controller
     controller.on('update', function() {
         console.log ({
-            updatePeriod  : Math.round(this.params.pixelpusher.updatePeriod * 100) / 100,
+            updatePeriod  : Math.round(
+                this.params.pixelpusher.updatePeriod * 100) / 100,
             deltaSequence : this.params.pixelpusher.deltaSequence,
             powerTotal    : this.params.pixelpusher.powerTotal
         });
     }).on('timeout', function() {
         // be sure to handel the situation when the controller dissappears.
         // this could be due to power cycle or network conditions
-        console.log('TIMEOUT : PixelPusher at address [' + controller.params.ipAddress + '] with MAC (' + controller.params.macAddress + ') has timed out. Awaiting re-discovery....');
+        console.log(
+            'TIMEOUT : PixelPusher at address [' + controller.params.ipAddress + 
+            '] with MAC (' + controller.params.macAddress + 
+            ') has timed out. Awaiting re-discovery....');
         if (!!timer) clearInterval(timer);
     });
 
@@ -30,7 +34,7 @@ new PixelPusher().on('discover', function(controller) {
     var NUM_PACKETS_PER_UPDATE = NUM_STRIPS/STRIPS_PER_PACKET;
 
     // aquire the number of pixels we that the controller reports is
-    // in each strip. This is set in the pixel.rc file placed on your thumb drive.
+    // in each strip. This is set in the pixel.rc
     var PIXELS_PER_STRIP = controller.params.pixelpusher.pixelsPerStrip;
 
     // create a loop that will send commands to the PP to update the strip
@@ -53,7 +57,12 @@ new PixelPusher().on('discover', function(controller) {
             var s = new PixelStrip(stripId,PIXELS_PER_STRIP);
 
             for (var i = 0; i < PIXELS_PER_STRIP; i++) {
-                var rgb = tinycolor.fromRatio({ h: (((i + index)%PIXELS_PER_STRIP)/PIXELS_PER_STRIP), s: 1, l: .51 }).toRgb();
+                var rgb = tinycolor.fromRatio(
+                    {
+                        h: (((i + index)%PIXELS_PER_STRIP)/PIXELS_PER_STRIP), 
+                        s: 1,
+                        l: .51 }
+                    ).toRgb();
                 s.getPixel(i).setColor(rgb.r, rgb.g, rgb.b, 255);
             }
             // render the strip data into the correct format for sending
