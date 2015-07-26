@@ -49,8 +49,9 @@ new PixelPusher().on('discover', function(controller) {
 
     var MIDI_PPQN = 24
     var MIDI_CLOCK = 248;
-    var MIDI_START = 251;
-    var MIDI_CONTINUE = 252;
+    var MIDI_START = 250;
+    var MIDI_STOP = 252;
+    var MIDI_CONTINUE = 251;
     var clocks = 0;
     var count = 0;
     var beats = [];
@@ -64,7 +65,7 @@ new PixelPusher().on('discover', function(controller) {
         strips.push(new PixelStrip(stripNum, PIXELS_PER_STRIP));
     }
     var input = new midi.input();
-    
+
     // Count the available input ports.
     input.getPortCount();
 
@@ -147,7 +148,7 @@ new PixelPusher().on('discover', function(controller) {
             for (var i = 0; i < PIXELS_PER_STRIP; i++) {
                 var rgb = tinycolor.fromRatio({
                     h: (((i + index) % PIXELS_PER_STRIP) / PIXELS_PER_STRIP),
-                    s: pulseval,
+                    s: 1 - pulseval,
                     l: .51
                 }).toRgb();
                 s.getPixel(i).setColor(rgb.r, rgb.g, rgb.b, 255);
