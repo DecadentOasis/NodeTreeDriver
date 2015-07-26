@@ -6,6 +6,7 @@
   "dependencies": {
     "buffertools": "^2.1.3",
     "heroic-pixel-pusher": "git+https://github.com/ajones/node-pixelpusher.git",
+    "midi": "^0.9.3",
     "nanotimer": "^0.3.10",
     "tinycolor2": "^1.1.2"
   },
