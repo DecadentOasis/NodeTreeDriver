@@ -1,13 +1,47 @@
 var PixelPusher = require('heroic-pixel-pusher');
 var PixelStrip = PixelPusher.PixelStrip;
 var NanoTimer = require('nanotimer');
-var tinycolor = require("tinycolor2");
 var midi = require('midi');
-//var patterns = require('./patterns');
+var patterns = require('./patterns');
 var bpminfo = require('./bpminfo');
 
-new PixelPusher().on('discover', function(controller) {
-    var timer = null;
+var pixelpusher = new PixelPusher();
+
+var timer = null;
+
+var input = new midi.input();
+// Configure a callback.
+input.on('message', function (deltaTime, message) {
+    bpminfo.handleMessage(deltaTime, message);
+});
+// Open the first available input port.
+input.openPort(0);
+// Sysex, timing, and active sensing messages are ignored
+// by default. To enable these message types, pass false for
+// the appropriate type in the function below.
+// Order: (Sysex, Timing, Active Sensing)
+// For example if you want to receive only MIDI Clock beats
+// you should use
+// input.ignoreTypes(true, false, true)
+input.ignoreTypes(true, false, true);
+
+var UPDATE_FREQUENCY_MILLIS = 15; // 15 is just faster than 60 FPS
+timer = new NanoTimer();
+var intvl = '' + UPDATE_FREQUENCY_MILLIS + 'm';
+console.log(intvl);
+timer.setInterval(tick, '', intvl);
+var lastTick = (new Date).getTime();
+
+var pattern = new patterns.patterns[0](pixelpusher, bpminfo);
+
+
+function tick() {
+    pattern.tick((new Date).getTime() - lastTick);
+    lastTick = (new Date).getTime();
+}
+
+pixelpusher.on('discover', function (controller) {
+
     // log connection data on initial discovery
     console.log('-----------------------------------');
     console.log('Discovered PixelPusher on network: ');
@@ -29,98 +63,11 @@ new PixelPusher().on('discover', function(controller) {
             'TIMEOUT : PixelPusher at address [' + controller.params.ipAddress +
             '] with MAC (' + controller.params.macAddress +
             ') has timed out. Awaiting re-discovery....');
-        if (!!timer) timer.clearInterval();
+        //if (!!timer) timer.clearInterval();
     });
 
-    // aquire the number of strips that the controller has said it
-    // has connected via the pixel.rc config file
-    var NUM_STRIPS = controller.params.pixelpusher.numberStrips;
-    var STRIPS_PER_PACKET = controller.params.pixelpusher.stripsPerPkt;
-    var NUM_PACKETS_PER_UPDATE = NUM_STRIPS / STRIPS_PER_PACKET;
+});
 
-    // aquire the number of pixels we that the controller reports is
-    // in each strip. This is set in the pixel.rc
-    var PIXELS_PER_STRIP = controller.params.pixelpusher.pixelsPerStrip;
-
-    // create a loop that will send commands to the PP to update the strip
-    var UPDATE_FREQUENCY_MILLIS = 15; // 15 is just faster than 60 FPS
-
-    var HUE_INCR_PER_MS = 0.005;
-
-    var index = 0;
-
-    var strips = [];
-    for (var stripNum = 0; stripNum < PIXELS_PER_STRIP; stripNum++) {
-        strips.push(new PixelStrip(stripNum, PIXELS_PER_STRIP));
-    }
-    var input = new midi.input();
-
-    // Count the available input ports.
-    input.getPortCount();
-
-    // Get the name of a specified input port.
-    input.getPortName(0);
-
-    // Configure a callback.
-    input.on('message', function(deltaTime, message) {
-        bpminfo.handleMessage(deltaTime, message);
-    });
-
-
-
-
-    // Open the first available input port.
-    input.openPort(0);
-
-    // Sysex, timing, and active sensing messages are ignored
-    // by default. To enable these message types, pass false for
-    // the appropriate type in the function below.
-    // Order: (Sysex, Timing, Active Sensing)
-    // For example if you want to receive only MIDI Clock beats
-    // you should use
-    // input.ignoreTypes(true, false, true)
-    input.ignoreTypes(true, false, true);
-
-    timer = new NanoTimer();
-    var intvl = '' + UPDATE_FREQUENCY_MILLIS + 'm';
-    console.log(intvl);
-    timer.setInterval(tick, '', intvl);
-
-    function tick() {
-        // create an array to hold the data for all the strips at once
-        // loop
-
-        var rendered = [];
-        var pulseval = bpminfo.pulse();
-        if (pulseval < 0.2) {
-            pulseval = 0.2;
-        };
-
-        for (var stripId = 0; stripId < NUM_STRIPS; stripId++) {
-            var s = strips[stripId];
-
-            for (var i = 0; i < PIXELS_PER_STRIP; i++) {
-                var rgb = tinycolor.fromRatio({
-                    h: (((i + index) % PIXELS_PER_STRIP) / PIXELS_PER_STRIP),
-                    s: 1 - pulseval,
-                    l: .51
-                }).toRgb();
-                s.getPixel(i).setColor(rgb.r, rgb.g, rgb.b, 255);
-            }
-            // render the strip data into the correct format for sending
-            // to the pixel pusher controller            
-            // add this data to our list of strip data to send
-            rendered.push(s.getStripData());
-        }
-        // inform the controller of the new strip frame
-        controller.refresh(rendered);
-        index += HUE_INCR_PER_MS * UPDATE_FREQUENCY_MILLIS;
-        if (index > PIXELS_PER_STRIP) {
-            index = 0;
-        }
-    };
-    //input.closePort();
-
-}).on('error', function(err) {
+pixelpusher.on('error', function (err) {
     console.log('PixelPusher Error: ' + err.message);
 });
