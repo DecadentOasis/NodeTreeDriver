@@ -3,6 +3,8 @@ var PixelStrip = PixelPusher.PixelStrip;
 var NanoTimer = require('nanotimer');
 var tinycolor = require("tinycolor2");
 var midi = require('midi');
+//var patterns = require('./patterns');
+var bpminfo = require('./bpminfo');
 
 new PixelPusher().on('discover', function(controller) {
     var timer = null;
@@ -47,19 +49,6 @@ new PixelPusher().on('discover', function(controller) {
 
     var index = 0;
 
-    var MIDI_PPQN = 24
-    var MIDI_CLOCK = 248;
-    var MIDI_START = 250;
-    var MIDI_STOP = 252;
-    var MIDI_CONTINUE = 251;
-    var clocks = 0;
-    var count = 0;
-    var beats = [];
-    var bpm = 120;
-    var mspb = 600;
-
-
-
     var strips = [];
     for (var stripNum = 0; stripNum < PIXELS_PER_STRIP; stripNum++) {
         strips.push(new PixelStrip(stripNum, PIXELS_PER_STRIP));
@@ -74,44 +63,10 @@ new PixelPusher().on('discover', function(controller) {
 
     // Configure a callback.
     input.on('message', function(deltaTime, message) {
-        // The message is an array of numbers corresponding to the MIDI bytes:
-        //   [status, data1, data2]
-        // https://www.cs.cf.ac.uk/Dave/Multimedia/node158.html has some helpful
-        // information interpreting the messages.
-        // console.log('m:' + message + ' d:' + deltaTime);
-        if (message == MIDI_CLOCK) {
-            if (clocks % MIDI_PPQN == 0) {
-                console.log("Quarter note");
-                var beatTime = new Date().getTime();
-                clocks = 0;
-                beats.push(beatTime);
-                if (beats.length > 1) {
-                    if (beats.length > 4) {
-                        beats.shift();
-                    }
-                    mspb = (beats[beats.length - 1] - beats[0]) / (beats.length - 1);
-                    bpm = 60000 / mspb;
-                }
-                count = Math.round(count) + 1;
-            }
-            clocks++;
-        } else {
-            if (message == MIDI_START || message == MIDI_CONTINUE) {
-                console.log("MIDI Synced.");
-                clocks = 0;
-                count = 0;
-            }
-        }
+        bpminfo.handleMessage(deltaTime, message);
     });
 
-    function beat() {
-        var passed = (new Date).getTime() - beats[beats.length - 1];
-        return count + passed / mspb;
-    }
 
-    function pulse() {
-        return Math.exp(-Math.pow(Math.pow(beat() % 1, 0.3) - 0.5, 2) / 0.05)
-    }
 
 
     // Open the first available input port.
@@ -136,12 +91,11 @@ new PixelPusher().on('discover', function(controller) {
         // loop
 
         var rendered = [];
-        var pulseval = pulse();
+        var pulseval = bpminfo.pulse();
         if (pulseval < 0.2) {
             pulseval = 0.2;
         };
 
-        console.log(pulseval);
         for (var stripId = 0; stripId < NUM_STRIPS; stripId++) {
             var s = strips[stripId];
 
