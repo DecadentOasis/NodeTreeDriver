@@ -27,6 +27,8 @@ try {
     // you should use
     // input.ignoreTypes(true, false, true)
     input.ignoreTypes(true, false, true);
+} finally {
+
 }
 
 var UPDATE_FREQUENCY_MILLIS = 15; // 15 is just faster than 60 FPS
